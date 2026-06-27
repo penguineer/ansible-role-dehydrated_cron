@@ -10,13 +10,11 @@ RETURN=$?
 OUTPUT=""
 
 if [ "0${RETURN}" -ne "0" ]; then
-    OUTPUT="${CALL} exited with ${RETURN}
-
-${RESULT}"
+    OUTPUT=$(printf '%s exited with %s\n\n%s\n' "$CALL" "$RETURN" "$RESULT")
 fi
 
 if [ -z "$OUTPUT" ]; then
-    LTRG=$(( $( cat $DOMAINS | wc -l ) * 5 + 1 ))
+    LTRG=$(( $( wc -l < "$DOMAINS" ) * 5 + 1 ))
     LEN=$(echo "$RESULT" | wc -l)
     if [ $LEN -gt $LTRG ]; then
         OUTPUT="$RESULT"
