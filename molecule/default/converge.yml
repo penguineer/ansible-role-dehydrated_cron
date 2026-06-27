@@ -2,27 +2,6 @@
 - name: Converge
   hosts: all
   tasks:
-    - name: "Check if time has already been created"
-      stat:
-        path: /cron_time
-      register: cron_file
-
-    - name: "Get the cron times for immediate tests"
-      ansible.builtin.shell:
-        cmd: |
-          secs=$(date +%s)
-          date "+%M %H * * * " --date="@$((secs + 90))" > /cron_time
-      when: not cron_file.stat.exists
-
-    - name: "Read the cron time"
-      ansible.builtin.shell:
-        cmd: cat /cron_time
-      register: date_output
-      changed_when: false
-
     - name: "Include penguineer.dehydrated_cron"
       include_role:
         name: "penguineer.dehydrated_cron"
-      vars:
-        dehydrated_cron_renew: "{{ date_output.stdout_lines[0] }}"
-        dehydrated_cron_check: "{{ date_output.stdout_lines[0] }}"

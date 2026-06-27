@@ -1,0 +1,8 @@
+[Unit]
+Description=Dehydrated certificate expiry check
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart={{ dehydrated_cron_script_dir }}/dehy-check.sh

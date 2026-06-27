@@ -7,7 +7,7 @@
       - openssl
     state: present
 
-- name: Copy dehydrated cron helper scripts
+- name: Copy dehydrated helper scripts
   ansible.builtin.template:
     src: "templates/{{ item }}.j2"
     dest: "{{ dehydrated_cron_script_dir }}/{{ item }}"
@@ -15,14 +15,44 @@
     group: root
     mode: '0755'
   with_items:
-  - "dehy-check.sh"
-  - "dehy-wrap.sh"
+    - "dehy-check.sh"
+    - "dehy-wrap.sh"
 
-
-- name: Set up cron
+- name: Deploy systemd service units
   ansible.builtin.template:
-    src: "templates/dehydrated.cron.j2"
-    dest: "/etc/cron.d/dehydrated"
-  notify: reload cron
-  # There is ansible.builtin.cron, but this makes configuration much
-  # more complicated, so we stick to the template.
+    src: "templates/{{ item }}.j2"
+    dest: "/etc/systemd/system/{{ item }}"
+    owner: root
+    group: root
+    mode: '0644'
+  with_items:
+    - "dehydrated-renew.service"
+    - "dehydrated-check.service"
+  notify: reload systemd daemon
+
+- name: Deploy systemd timer units
+  ansible.builtin.template:
+    src: "templates/{{ item }}.j2"
+    dest: "/etc/systemd/system/{{ item }}"
+    owner: root
+    group: root
+    mode: '0644'
+  with_items:
+    - "dehydrated-renew.timer"
+    - "dehydrated-check.timer"
+  notify: reload systemd daemon
+
+- name: Enable and start systemd timers
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: started
+    enabled: true
+    daemon_reload: true
+  with_items:
+    - dehydrated-renew.timer
+    - dehydrated-check.timer
+
+- name: Remove legacy cron file if present
+  ansible.builtin.file:
+    path: /etc/cron.d/dehydrated
+    state: absent

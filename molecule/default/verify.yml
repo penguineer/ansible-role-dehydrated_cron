@@ -5,58 +5,101 @@
   hosts: all
   gather_facts: false
   tasks:
-  - name: Check if /etc/cron.d/dehydrated exists
-    stat:
-      path: /etc/cron.d/dehydrated
-    register: cron_file
+    - name: Check if /usr/local/bin/dehy-check.sh exists
+      stat:
+        path: /usr/local/bin/dehy-check.sh
+      register: check_file
 
-  - name: Assert cron file exists
-    ansible.builtin.assert:
-      that: cron_file.stat.exists
+    - name: Assert check helper file exists
+      ansible.builtin.assert:
+        that: check_file.stat.exists
 
-  - name: Check if /usr/local/bin/dehy-check.sh exists
-    stat:
-      path: /usr/local/bin/dehy-check.sh
-    register: check_file
+    - name: Check if /usr/local/bin/dehy-wrap.sh exists
+      stat:
+        path: /usr/local/bin/dehy-wrap.sh
+      register: wrap_file
 
-  - name: Assert check helper file exists
-    ansible.builtin.assert:
-      that: check_file.stat.exists
+    - name: Assert renew helper file exists
+      ansible.builtin.assert:
+        that: wrap_file.stat.exists
 
-  - name: Check if /usr/local/bin/dehy-wrap.sh exists
-    stat:
-      path: /usr/local/bin/dehy-wrap.sh
-    register: wrap_file
+    - name: Check if /etc/systemd/system/dehydrated-renew.service exists
+      stat:
+        path: /etc/systemd/system/dehydrated-renew.service
+      register: renew_service_file
 
-  - name: Assert renew helper file exists
-    ansible.builtin.assert:
-      that: wrap_file.stat.exists
+    - name: Assert renew service unit file exists
+      ansible.builtin.assert:
+        that: renew_service_file.stat.exists
 
-  - name: Wait 120 seconds for CRON to be invoked
-    wait_for:
-      timeout: 120
-    delegate_to: localhost
+    - name: Check if /etc/systemd/system/dehydrated-renew.timer exists
+      stat:
+        path: /etc/systemd/system/dehydrated-renew.timer
+      register: renew_timer_file
 
-  - name: Check if cron call to check has been reported
-    ansible.builtin.replace:
-      name: /var/log/syslog
-      regexp: ".* \\(root\\) CMD \\( \\/usr\\/local\\/bin\\/dehy-check\\.sh\\)"
-      replace: "Check entry found"
-    check_mode: yes
-    register: run_check
+    - name: Assert renew timer unit file exists
+      ansible.builtin.assert:
+        that: renew_timer_file.stat.exists
 
-  - name: Assert check helper entry could be found
-    ansible.builtin.assert:
-      that: (run_check is changed) and (run_check is not failed)
+    - name: Check if /etc/systemd/system/dehydrated-check.service exists
+      stat:
+        path: /etc/systemd/system/dehydrated-check.service
+      register: check_service_file
 
-  - name: Check if cron call to renew has been reported
-    ansible.builtin.replace:
-      name: /var/log/syslog
-      regexp: ".* \\(root\\) CMD \\( \\/usr\\/local\\/bin\\/dehy-wrap\\.sh\\)"
-      replace: "Wrap entry found"
-    check_mode: yes
-    register: run_wrap
+    - name: Assert check service unit file exists
+      ansible.builtin.assert:
+        that: check_service_file.stat.exists
 
-  - name: Assert renew helper entry could be found
-    ansible.builtin.assert:
-      that: (run_wrap is changed) and (run_wrap is not failed)
+    - name: Check if /etc/systemd/system/dehydrated-check.timer exists
+      stat:
+        path: /etc/systemd/system/dehydrated-check.timer
+      register: check_timer_file
+
+    - name: Assert check timer unit file exists
+      ansible.builtin.assert:
+        that: check_timer_file.stat.exists
+
+    - name: Get dehydrated-renew.timer enabled state
+      ansible.builtin.command: systemctl is-enabled dehydrated-renew.timer
+      register: renew_timer_enabled
+      changed_when: false
+
+    - name: Assert renew timer is enabled
+      ansible.builtin.assert:
+        that: renew_timer_enabled.stdout == "enabled"
+
+    - name: Get dehydrated-check.timer enabled state
+      ansible.builtin.command: systemctl is-enabled dehydrated-check.timer
+      register: check_timer_enabled
+      changed_when: false
+
+    - name: Assert check timer is enabled
+      ansible.builtin.assert:
+        that: check_timer_enabled.stdout == "enabled"
+
+    - name: Get dehydrated-renew.timer active state
+      ansible.builtin.command: systemctl is-active dehydrated-renew.timer
+      register: renew_timer_active
+      changed_when: false
+
+    - name: Assert renew timer is active
+      ansible.builtin.assert:
+        that: renew_timer_active.stdout == "active"
+
+    - name: Get dehydrated-check.timer active state
+      ansible.builtin.command: systemctl is-active dehydrated-check.timer
+      register: check_timer_active
+      changed_when: false
+
+    - name: Assert check timer is active
+      ansible.builtin.assert:
+        that: check_timer_active.stdout == "active"
+
+    - name: Assert legacy cron file is absent
+      stat:
+        path: /etc/cron.d/dehydrated
+      register: legacy_cron_file
+
+    - name: Assert legacy cron file does not exist
+      ansible.builtin.assert:
+        that: not legacy_cron_file.stat.exists

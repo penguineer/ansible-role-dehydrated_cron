@@ -1,0 +1,9 @@
+[Unit]
+Description=Timer for Dehydrated certificate renewal
+
+[Timer]
+OnCalendar={{ dehydrated_timer_renew }}
+Persistent=true
+
+[Install]
+WantedBy=timers.target
