@@ -18,8 +18,12 @@ check_certs() {
 
 issues="$(check_certs)"
 
-if [ ! -z "$issues" ]; then
-    echo "Some certs will expire soon. Check dehydrated calls!"
-    echo
-    echo "$issues"
+if [ -n "$issues" ]; then
+    OUTPUT="Some certs will expire soon. Check dehydrated calls!
+
+${issues}"
+    echo "$OUTPUT"
+{% if dehydrated_mail_to %}
+    echo "$OUTPUT" | mail -s "{{ dehydrated_mail_subject_prefix }} Certificate expiry warning" "{{ dehydrated_mail_to }}"
+{% endif %}
 fi

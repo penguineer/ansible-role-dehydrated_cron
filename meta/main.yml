@@ -17,7 +17,7 @@ galaxy_info:
     - all
 
   galaxy_tags:
-  - cron
+  - systemd
   - dehydrated
 
 dependencies: []

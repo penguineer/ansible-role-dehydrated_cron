@@ -1,9 +1,5 @@
 ---
 # handlers file for dehydrated-cron
-- name: reload cron
-  ansible.builtin.shell:
-    cmd: service cron reload
-# Use the shell call because the task sometimes has problems finding the service state
-#  service:
-#    name: cron
-#    state: restarted
+- name: reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: true

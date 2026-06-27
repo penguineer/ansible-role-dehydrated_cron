@@ -1,9 +1,11 @@
 ---
 # defaults file for dehydrated-cron
 dehydrated_cron_script_dir: "/usr/local/bin"
-dehydrated_cron_renew: "0 4 * * *"
-dehydrated_cron_check: "0 5 * * *"
+dehydrated_timer_renew: "*-*-* 04:00:00"
+dehydrated_timer_check: "*-*-* 05:00:00"
 dehydrated_config_dir: "/usr/local/etc/dehydrated"
 dehydrated_certs_dir: "{{ dehydrated_config_dir }}/certs"
 dehydrated_binary: "/usr/local/bin/dehydrated"
 dehydrated_check_span: 864000
+dehydrated_mail_to: ""
+dehydrated_mail_subject_prefix: "[dehydrated]"

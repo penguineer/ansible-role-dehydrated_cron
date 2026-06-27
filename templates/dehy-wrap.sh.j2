@@ -7,15 +7,25 @@ CALL="$DEHYDRATED -c -g"
 RESULT=$($CALL)
 RETURN=$?
 
+OUTPUT=""
+
 if [ "0${RETURN}" -ne "0" ]; then
-    echo "$CALL exited with ${RETURN}"
-    echo
-    echo "$RESULT"
+    OUTPUT="${CALL} exited with ${RETURN}
+
+${RESULT}"
 fi
 
-LTRG=$(( $( cat $DOMAINS | wc -l )  * 5 + 1))
+if [ -z "$OUTPUT" ]; then
+    LTRG=$(( $( cat $DOMAINS | wc -l ) * 5 + 1 ))
+    LEN=$(echo "$RESULT" | wc -l)
+    if [ $LEN -gt $LTRG ]; then
+        OUTPUT="$RESULT"
+    fi
+fi
 
-LEN=$(echo "$RESULT" | wc -l)
-if [ $LEN -gt $LTRG ]; then
-    echo "$RESULT"
+if [ -n "$OUTPUT" ]; then
+    echo "$OUTPUT"
+{% if dehydrated_mail_to %}
+    echo "$OUTPUT" | mail -s "{{ dehydrated_mail_subject_prefix }} Certificate renewal" "{{ dehydrated_mail_to }}"
+{% endif %}
 fi

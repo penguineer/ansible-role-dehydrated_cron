@@ -6,22 +6,3 @@
       apt:
         update_cache: yes
       changed_when: false
-
-    - name: "Install cron and syslog-ng"
-      package:
-        name:
-          - cron
-          - syslog-ng
-        state: present
-
-    - name: Start syslog
-      ansible.builtin.shell:
-        cmd: service syslog-ng start
-
-    - name: Start cron
-      ansible.builtin.shell:
-        cmd: service cron start
-# Use the shell call because the task sometimes has problems finding the service state
-#      service:
-#        name: cron
-#        state: started
