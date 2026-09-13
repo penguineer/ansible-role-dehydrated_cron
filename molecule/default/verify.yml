@@ -160,13 +160,15 @@
       ansible.builtin.command: /usr/local/bin/dehy-wrap.sh
       environment:
         DEHYDRATED_TEST_EXIT: "1"
+        DEHYDRATED_TEST_STDERR: "1"
       register: dehydrated_error
       changed_when: false
+      failed_when: false
 
     - name: Assert dehydrated error is reported
       ansible.builtin.assert:
         that:
-          - dehydrated_error.rc == 0
+          - dehydrated_error.rc == 1
           - "'exited with 1' in dehydrated_error.stdout"
           - "'Hook failed with exit code 1' in dehydrated_error.stdout"
 
