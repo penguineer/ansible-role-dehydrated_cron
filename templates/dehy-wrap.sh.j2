@@ -3,7 +3,7 @@
 DEHYDRATED="{{ dehydrated_binary }}"
 CALL="$DEHYDRATED -c -g"
 
-RESULT=$($CALL)
+RESULT=$($CALL 2>&1)
 RETURN=$?
 
 OUTPUT=""
@@ -20,3 +20,5 @@ if [ -n "$OUTPUT" ]; then
     echo "$OUTPUT" | mail -s "{{ dehydrated_mail_subject_prefix }} Certificate renewal" "{{ dehydrated_mail_to }}"
 {% endif %}
 fi
+
+exit "$RETURN"
