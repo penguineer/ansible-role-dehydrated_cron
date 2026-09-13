@@ -5,7 +5,7 @@ SPAN={{ dehydrated_check_span }}
 shopt -s nullglob
 CERT_DIRS=( "{{ dehydrated_certs_dir }}"/*/ )
 
-if [ "${#CERT_DIRS[@]}" -eq 0 ]; then
+if [ -z "${CERT_DIRS[*]}" ]; then
     exit 0
 fi
 
