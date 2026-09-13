@@ -147,3 +147,26 @@
           - renewal.rc == 0
           - "'Renewing!' in renewal.stdout"
           - "'Processing example.com' in renewal.stdout"
+
+    - name: Set dehydrated hook failure output
+      ansible.builtin.copy:
+        dest: /tmp/dehydrated-test-output
+        content: |
+          Processing example.com
+           + Deploying certificate...
+          Hook failed with exit code 1
+
+    - name: Run wrapper with dehydrated error
+      ansible.builtin.command: /usr/local/bin/dehy-wrap.sh
+      environment:
+        DEHYDRATED_TEST_EXIT: "1"
+      register: dehydrated_error
+      changed_when: false
+
+    - name: Assert dehydrated error is reported
+      ansible.builtin.assert:
+        that:
+          - dehydrated_error.rc == 0
+          - "'exited with 1' in dehydrated_error.stdout"
+          - "'Hook failed with exit code 1' in dehydrated_error.stdout"
+
