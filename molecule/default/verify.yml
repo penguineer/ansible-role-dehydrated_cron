@@ -1,6 +1,4 @@
 ---
-# This is an example playbook to execute Ansible tests.
-
 - name: Verify
   hosts: all
   gather_facts: false
@@ -103,3 +101,49 @@
     - name: Assert legacy cron file does not exist
       ansible.builtin.assert:
         that: not legacy_cron_file.stat.exists
+
+    - name: Set no-renewal dehydrated output
+      ansible.builtin.copy:
+        dest: /tmp/dehydrated-test-output
+        content: |
+          # INFO: Using main config file /usr/local/etc/dehydrated/config
+          Processing example.com
+           + Using certificate specific config file!
+           + HOOK = /usr/local/etc/dehydrated/certs/example.com/hook.sh
+           + Checking domain name(s) of existing cert... unchanged.
+           + Checking expire date of existing cert...
+           + Valid till Dec 11 01:02:06 2026 GMT (Longer than 32 days). Skipping renew!
+
+    - name: Run wrapper without renewal
+      ansible.builtin.command: /usr/local/bin/dehy-wrap.sh
+      register: no_renewal
+      changed_when: false
+
+    - name: Assert no output is produced without renewal
+      ansible.builtin.assert:
+        that:
+          - no_renewal.rc == 0
+          - no_renewal.stdout == ""
+
+    - name: Set renewal dehydrated output
+      ansible.builtin.copy:
+        dest: /tmp/dehydrated-test-output
+        content: |
+          # INFO: Using main config file /usr/local/etc/dehydrated/config
+          Processing example.com
+           + Checking expire date of existing cert...
+           + Valid till Oct 14 01:01:43 2026 GMT (Less than 32 days). Renewing!
+           + Signing domains...
+           + Done!
+
+    - name: Run wrapper with renewal
+      ansible.builtin.command: /usr/local/bin/dehy-wrap.sh
+      register: renewal
+      changed_when: false
+
+    - name: Assert renewal output is reported
+      ansible.builtin.assert:
+        that:
+          - renewal.rc == 0
+          - "'Renewing!' in renewal.stdout"
+          - "'Processing example.com' in renewal.stdout"
