@@ -172,3 +172,17 @@
           - "'exited with 1' in dehydrated_error.stdout"
           - "'Hook failed with exit code 1' in dehydrated_error.stdout"
 
+    - name: Run expiry check without certificates
+      ansible.builtin.command: /usr/local/bin/dehy-check.sh
+      register: missing_certificates
+      changed_when: false
+      failed_when: false
+
+    - name: Assert missing certificate set is reported explicitly
+      ansible.builtin.assert:
+        that:
+          - missing_certificates.rc == 1
+          - "'No certificates found in /usr/local/etc/dehydrated/certs' in missing_certificates.stdout"
+          - "'*/cert.pem' not in missing_certificates.stdout"
+          - "'*/cert.pem' not in missing_certificates.stderr"
+
