@@ -172,3 +172,71 @@
           - "'exited with 1' in dehydrated_error.stdout"
           - "'Hook failed with exit code 1' in dehydrated_error.stdout"
 
+    - name: Ensure certificate root directory exists
+      ansible.builtin.file:
+        path: /usr/local/etc/dehydrated/certs
+        state: directory
+        mode: '0755'
+
+    - name: Run expiry check with no configured certificates
+      ansible.builtin.command: /usr/local/bin/dehy-check.sh
+      register: empty_certificate_root
+      changed_when: false
+
+    - name: Assert empty certificate root is accepted
+      ansible.builtin.assert:
+        that:
+          - empty_certificate_root.rc == 0
+          - empty_certificate_root.stdout == ""
+          - empty_certificate_root.stderr == ""
+
+    - name: Create incomplete certificate directory
+      ansible.builtin.file:
+        path: /usr/local/etc/dehydrated/certs/example.com
+        state: directory
+        mode: '0755'
+
+    - name: Run expiry check with incomplete certificate directory
+      ansible.builtin.command: /usr/local/bin/dehy-check.sh
+      register: incomplete_certificate
+      changed_when: false
+      failed_when: false
+
+    - name: Assert incomplete certificate directory is reported
+      ansible.builtin.assert:
+        that:
+          - incomplete_certificate.rc == 1
+          - "'Missing cert.pem in /usr/local/etc/dehydrated/certs/example.com/' in incomplete_certificate.stdout"
+          - "'*/cert.pem' not in incomplete_certificate.stdout"
+          - "'*/cert.pem' not in incomplete_certificate.stderr"
+
+    - name: Create valid test certificate
+      ansible.builtin.command:
+        argv:
+          - openssl
+          - req
+          - -x509
+          - -newkey
+          - rsa:2048
+          - -nodes
+          - -subj
+          - /CN=example.com
+          - -days
+          - "365"
+          - -keyout
+          - /tmp/example.key
+          - -out
+          - /usr/local/etc/dehydrated/certs/example.com/cert.pem
+      changed_when: false
+
+    - name: Run expiry check with valid certificate directory
+      ansible.builtin.command: /usr/local/bin/dehy-check.sh
+      register: valid_certificate
+      changed_when: false
+
+    - name: Assert valid certificate directory passes
+      ansible.builtin.assert:
+        that:
+          - valid_certificate.rc == 0
+          - valid_certificate.stdout == ""
+
