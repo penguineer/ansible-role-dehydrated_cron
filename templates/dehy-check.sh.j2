@@ -2,15 +2,26 @@
 
 SPAN={{ dehydrated_check_span }}
 
-check_certs() {
-    for pem in {{ dehydrated_certs_dir }}/*/cert.pem; do
+shopt -s nullglob
+CERTS=( "{{ dehydrated_certs_dir }}"/*/cert.pem )
 
-        RET=$(openssl x509 -checkend $SPAN -noout -in $pem)
+if [ "${#CERTS[@]}" -eq 0 ]; then
+    OUTPUT="No certificates found in {{ dehydrated_certs_dir }}"
+    echo "$OUTPUT"
+{% if dehydrated_mail_to %}
+    echo "$OUTPUT" | mail -s "{{ dehydrated_mail_subject_prefix }} Certificate check failed" "{{ dehydrated_mail_to }}"
+{% endif %}
+    exit 1
+fi
+
+check_certs() {
+    for pem in "${CERTS[@]}"; do
+        openssl x509 -checkend "$SPAN" -noout -in "$pem" >/dev/null
         RETURN=$?
 
         if [ "0${RETURN}" -ne "0" ]; then
             printf '%s: %s\n' \
-                "$(date --date="$(openssl x509 -enddate -noout -in "$pem"|cut -d= -f 2)" --iso-8601)" \
+                "$(date --date="$(openssl x509 -enddate -noout -in "$pem" | cut -d= -f 2)" --iso-8601)" \
                 "$pem"
         fi
     done | sort
