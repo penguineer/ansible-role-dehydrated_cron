@@ -53,7 +53,7 @@ tasks:
 ### E-mail notifications
 
 Set `dehydrated_mail_to` to an e-mail address to receive notifications:
-- when certificates are **renewed** (i.e. dehydrated produces more output than expected for a no-change run)
+- when certificates are **renewed** (detected from dehydrated's explicit renewal output)
 - when **dehydrated exits with an error**
 - when certificates are **about to expire** (detected by the check timer)
 
