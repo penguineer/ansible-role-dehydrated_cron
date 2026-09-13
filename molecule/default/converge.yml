@@ -2,6 +2,19 @@
 - name: Converge
   hosts: all
   tasks:
+    - name: Install fake dehydrated command for wrapper tests
+      ansible.builtin.copy:
+        dest: /usr/local/bin/dehydrated-test
+        owner: root
+        group: root
+        mode: '0755'
+        content: |
+          #!/bin/bash
+          cat /tmp/dehydrated-test-output
+          exit "${DEHYDRATED_TEST_EXIT:-0}"
+
     - name: "Include penguineer.dehydrated_cron"
       include_role:
         name: "penguineer.dehydrated_cron"
+      vars:
+        dehydrated_binary: /usr/local/bin/dehydrated-test
