@@ -10,7 +10,11 @@
         mode: '0755'
         content: |
           #!/bin/bash
-          cat /tmp/dehydrated-test-output
+          if [ "${DEHYDRATED_TEST_STDERR:-0}" = "1" ]; then
+              cat /tmp/dehydrated-test-output >&2
+          else
+              cat /tmp/dehydrated-test-output
+          fi
           exit "${DEHYDRATED_TEST_EXIT:-0}"
 
     - name: "Include penguineer.dehydrated_cron"
