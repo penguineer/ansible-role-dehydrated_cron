@@ -12,7 +12,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: "Check-out"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref }}
+          # Needed for correct Maven version detection
+          fetch-depth: 0
       - name: "Generate release changelog"
         id: generate-release-changelog
         uses: heinrichreimer/github-changelog-generator-action@v2.3
