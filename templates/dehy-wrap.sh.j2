@@ -1,6 +1,5 @@
 #!/bin/bash
 
-DOMAINS="{{ dehydrated_config_dir }}/domains.txt"
 DEHYDRATED="{{ dehydrated_binary }}"
 CALL="$DEHYDRATED -c -g"
 
@@ -11,14 +10,8 @@ OUTPUT=""
 
 if [ "0${RETURN}" -ne "0" ]; then
     OUTPUT=$(printf '%s exited with %s\n\n%s\n' "$CALL" "$RETURN" "$RESULT")
-fi
-
-if [ -z "$OUTPUT" ]; then
-    LTRG=$(( $( wc -l < "$DOMAINS" ) * 5 + 1 ))
-    LEN=$(echo "$RESULT" | wc -l)
-    if [ $LEN -gt $LTRG ]; then
-        OUTPUT="$RESULT"
-    fi
+elif grep -q 'Renewing!' <<<"$RESULT"; then
+    OUTPUT="$RESULT"
 fi
 
 if [ -n "$OUTPUT" ]; then
