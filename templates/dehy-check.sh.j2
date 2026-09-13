@@ -3,19 +3,21 @@
 SPAN={{ dehydrated_check_span }}
 
 shopt -s nullglob
-CERTS=( "{{ dehydrated_certs_dir }}"/*/cert.pem )
+CERT_DIRS=( "{{ dehydrated_certs_dir }}"/*/ )
 
-if [ "${#CERTS[@]}" -eq 0 ]; then
-    OUTPUT="No certificates found in {{ dehydrated_certs_dir }}"
-    echo "$OUTPUT"
-{% if dehydrated_mail_to %}
-    echo "$OUTPUT" | mail -s "{{ dehydrated_mail_subject_prefix }} Certificate check failed" "{{ dehydrated_mail_to }}"
-{% endif %}
-    exit 1
+if [ "${#CERT_DIRS[@]}" -eq 0 ]; then
+    exit 0
 fi
 
 check_certs() {
-    for pem in "${CERTS[@]}"; do
+    for cert_dir in "${CERT_DIRS[@]}"; do
+        pem="${cert_dir}cert.pem"
+
+        if [ ! -f "$pem" ]; then
+            printf 'Missing cert.pem in %s\n' "$cert_dir"
+            continue
+        fi
+
         openssl x509 -checkend "$SPAN" -noout -in "$pem" >/dev/null
         RETURN=$?
 
@@ -30,11 +32,15 @@ check_certs() {
 issues="$(check_certs)"
 
 if [ -n "$issues" ]; then
-    OUTPUT="Some certs will expire soon. Check dehydrated calls!
+    OUTPUT="Certificate check found problems:
 
 ${issues}"
     echo "$OUTPUT"
 {% if dehydrated_mail_to %}
-    echo "$OUTPUT" | mail -s "{{ dehydrated_mail_subject_prefix }} Certificate expiry warning" "{{ dehydrated_mail_to }}"
+    echo "$OUTPUT" | mail -s "{{ dehydrated_mail_subject_prefix }} Certificate check failed" "{{ dehydrated_mail_to }}"
 {% endif %}
+
+    if grep -q '^Missing cert.pem in ' <<<"$issues"; then
+        exit 1
+    fi
 fi
